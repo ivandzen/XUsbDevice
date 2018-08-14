@@ -8,7 +8,7 @@
 #ifndef XUSBDEVICE_H_
 #define XUSBDEVICE_H_
 
-#include <plugins/usb/common/usbdescriptors.h>
+#include "usbdescriptors.h"
 #include "XUsbDevice_Config.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////

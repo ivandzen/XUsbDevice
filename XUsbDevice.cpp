@@ -5,7 +5,7 @@
  *      Author: ivan
  */
 
-#include <plugins/usb/device/XUsbDevice.h>
+#include "XUsbDevice.h"
 
 
 #define LOBYTE(x)  ((uint8_t)(x & 0x00FF))
