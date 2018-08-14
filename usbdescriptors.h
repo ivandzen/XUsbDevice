@@ -1,6 +1,6 @@
 #ifndef USBDESCRIPTORS_H
 #define USBDESCRIPTORS_H
-#include <core/common/arrayref.h>
+#include <stdint.h>
 #include <string.h>
 
 #define __packed __attribute__((packed))
@@ -107,29 +107,34 @@ UsbRequest;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class __packed UsbDescriptor :
-        public ArrayRef<uint8_t>
+class __packed UsbDescriptor
 {
 public:
 	UsbDescriptor() :
-		ArrayRef<uint8_t>((uint8_t*)nullptr, 0)
+		_data(nullptr),
+		_size(0)
 	{}
 
-    UsbDescriptor(uint8_t * data, Length_t length) :
-        ArrayRef<uint8_t>(data, length)
+    UsbDescriptor(uint8_t * data, uint16_t length) :
+    	_data(data),
+		_size(length)
     {}
+
+    inline uint8_t * data() const { return _data; }
+
+    inline uint16_t size() const { return _size; }
 
     inline bool init(uint8_t length,
                      uint8_t type)
     {
-        if(length > size())
+        if(length > _size)
             return false;
         fields()->bLength = length;
         fields()->bDescriptorType = type;
         return true;
     }
 
-    inline bool isValid() const { return (data() != nullptr) && size() != 0; }
+    inline bool isValid() const { return (_data != nullptr) && _size != 0; }
 
     inline uint8_t bLength() const { return fields()->bLength; }
 
@@ -147,7 +152,10 @@ private:
     }
     UsbDescriptorFields;
 
-    inline UsbDescriptorFields * fields() const { return reinterpret_cast<UsbDescriptorFields*>(data()); }
+    inline UsbDescriptorFields * fields() const { return reinterpret_cast<UsbDescriptorFields*>(_data); }
+
+    uint8_t * _data;
+    uint16_t _size;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +205,7 @@ public:
 
     static const int SIZE = 2 + sizeof(DevDescriptorFields);
 
-	UsbDeviceDescriptor(uint8_t * data, Length_t length) :
+	UsbDeviceDescriptor(uint8_t * data, uint16_t length) :
 		UsbDescriptor(data, length)
 	{}
 
@@ -299,7 +307,7 @@ public:
 		UsbDescriptor()
 	{}
 
-    UsbEPDescriptor(uint8_t * data, Length_t length) :
+    UsbEPDescriptor(uint8_t * data, uint16_t length) :
         UsbDescriptor(data, length)
     {}
 
@@ -381,7 +389,7 @@ public:
 		CS_ENDPOINT 		= 0x25
 	};
 
-    UsbClassSpecificDescriptor(uint8_t * data, Length_t length) :
+    UsbClassSpecificDescriptor(uint8_t * data, uint16_t length) :
         UsbDescriptor (data, length)
     {}
 
@@ -455,7 +463,7 @@ class UsbInterfaceDescriptor :
 public:
 	static const uint8_t MaxEndpoints = 8;
 
-    UsbInterfaceDescriptor(uint8_t * data, Length_t length) :
+    UsbInterfaceDescriptor(uint8_t * data, uint16_t length) :
         UsbDescriptor (data, length),
         _totalLength(0)
     {
@@ -581,7 +589,7 @@ class UsbConfigDescriptor :
         public UsbDescriptor
 {
 public:
-	UsbConfigDescriptor(uint8_t * data, Length_t length) :
+	UsbConfigDescriptor(uint8_t * data, uint16_t length) :
 		UsbDescriptor(data, length)
 	{}
 

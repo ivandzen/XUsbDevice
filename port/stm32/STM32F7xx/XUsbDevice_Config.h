@@ -27,7 +27,13 @@
 		HAL_PCD_EP_SetStall((PCD_HandleTypeDef*)handle, epnum)
 
 #define HAL_XUsbDevice_OpenEP(handle, ep_addr, ep_mps, ep_type) \
-		HAL_PCD_EP_Open((PCD_HandleTypeDef*)(handle), ep_addr, ep_mps, ep_type)
+{ \
+		if(ep_addr & 0x80) \
+			HAL_PCDEx_SetTxFiFo((PCD_HandleTypeDef*)(handle), ep_addr & 0x7F, 0x80); \
+		else \
+			HAL_PCDEx_SetRxFiFo((PCD_HandleTypeDef*)(handle), 0x40); \
+		HAL_PCD_EP_Open((PCD_HandleTypeDef*)(handle), ep_addr, ep_mps, ep_type); \
+}
 
 #define HAL_XUsbDevice_CloseEP(handle, ep_addr) \
 		HAL_PCD_EP_Close((PCD_HandleTypeDef*)handle, ep_addr)
@@ -37,6 +43,9 @@
 
 #define HAL_XUsbDevice_ClearStallEP(handle, epnum) \
 		HAL_PCD_EP_ClrStall((PCD_HandleTypeDef*)handle, epnum)
+
+#define HAL_XUsbDevice_Flush(handle, epnum) \
+		HAL_PCD_EP_Flush((PCD_HandleTypeDef*)handle, epnum)
 
 #define HAL_XUsbDevice_GetRxCount(handle, ep_addr) \
 		HAL_PCD_EP_GetRxCount((PCD_HandleTypeDef*)handle, ep_addr)

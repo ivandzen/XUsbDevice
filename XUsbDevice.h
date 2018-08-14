@@ -10,6 +10,7 @@
 
 #include "usbdescriptors.h"
 #include "XUsbDevice_Config.h"
+#include <assert.h>
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -282,7 +283,7 @@ public:
 			  const char * serial,
               uint8_t numConfigs)
 	{
-		return UsbDeviceDescriptor(DataPtr(_devDescData), UsbDeviceDescriptor::SIZE).
+		return UsbDeviceDescriptor((uint8_t*)(_devDescData), UsbDeviceDescriptor::SIZE).
 					init(bcd, deviceClass, deviceSubClass, deviceProtocol,
 						 maxPacketSize, vendorID, productID, bcdDev,
 						 createStr(manufacturerStr), createStr(productStr),

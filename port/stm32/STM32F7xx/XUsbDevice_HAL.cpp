@@ -11,12 +11,15 @@
 extern "C" {
 #endif
 
+#define USBx USB_OTG_FS
+
 /**
   * @brief  Setup stage callback
   * @param  hpcd: PCD handle
   * @retval None
   */
-void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd) {
+void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
+{
 	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
     device->setupStage((uint8_t*)hpcd->Setup);
 }
@@ -27,7 +30,8 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd) {
   * @param  epnum: Endpoint Number
   * @retval None
   */
-void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
+void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+{
 	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
     device->dataOutStage(epnum, hpcd->OUT_ep[epnum].xfer_buff);
 }
@@ -38,7 +42,8 @@ void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
   * @param  epnum: Endpoint Number
   * @retval None
   */
-void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
+void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+{
 	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
     device->dataInStage(epnum, hpcd->IN_ep[epnum].xfer_buff);
 }
@@ -48,7 +53,8 @@ void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum) {
   * @param  hpcd: PCD handle
   * @retval None
   */
-void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd) {
+void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
+{
 	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
     device->SOF();
 }
@@ -58,25 +64,10 @@ void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd) {
   * @param  hpcd: PCD handle
   * @retval None
   */
-void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd) {
+void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
+{
 	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
-	XUsbDevice::Speed speed = XUsbDevice::USBD_SPEED_FULL;
-
-    /*Set USB Current Speed*/
-    switch (hpcd->Init.speed) {
-    case PCD_SPEED_HIGH:
-        speed = XUsbDevice::USBD_SPEED_HIGH;
-        break;
-    case PCD_SPEED_FULL:
-        speed = XUsbDevice::USBD_SPEED_FULL;
-        break;
-
-    default:
-        speed = XUsbDevice::USBD_SPEED_FULL;
-        break;
-    }
-
-    device->reset(speed);
+    device->reset();
 }
 
 /**
@@ -90,10 +81,11 @@ void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
 	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
     /* Inform USB library that core enters in suspend Mode */
     device->suspend();
-    __HAL_PCD_GATE_PHYCLOCK(hpcd);
+    //__HAL_PCD_GATE_PHYCLOCK(hpcd);
     /*Enter in STOP mode */
     /* USER CODE BEGIN 2 */
-    if (hpcd->Init.low_power_enable) {
+    if (hpcd->Init.low_power_enable)
+    {
         /* Set SLEEPDEEP bit and SleepOnExit of Cortex System Control Register */
         SCB->SCR |= (uint32_t)((uint32_t)(SCB_SCR_SLEEPDEEP_Msk | SCB_SCR_SLEEPONEXIT_Msk));
     }
@@ -120,8 +112,14 @@ void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
   */
 void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
-	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
-    device->isoOutIncomplete(epnum);
+	//XUsbDevice * device = (XUsbDevice*)hpcd->pData;
+    //device->isoOutIncomplete(epnum);
+
+    uint32_t framenum = (USBx_DEVICE->DSTS | USB_OTG_DSTS_FNSOF) >> USB_OTG_DSTS_FNSOF_Pos;
+    if(framenum % 2 == 0)
+    	USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_SODDFRM;
+    else
+    	USBx_OUTEP(epnum)->DOEPCTL |= USB_OTG_DOEPCTL_SD0PID_SEVNFRM;
 }
 
 /**
@@ -132,8 +130,16 @@ void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
   */
 void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
-	XUsbDevice * device = (XUsbDevice*)hpcd->pData;
-    device->isoInIncomplete(epnum);
+	//XUsbDevice * device = (XUsbDevice*)hpcd->pData;
+	//device->isoInIncomplete(epnum);
+
+	//uint32_t framenum = (USBx_DEVICE->DSTS | USB_OTG_DSTS_FNSOF) >> USB_OTG_DSTS_FNSOF_Pos;
+
+
+	if ((USBx_DEVICE->DSTS & ( 1U << 8U )) != 0U)
+	    USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_SODDFRM;
+	else
+	    USBx_INEP(epnum)->DIEPCTL |= USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
 }
 
 /**
